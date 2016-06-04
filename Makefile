@@ -25,14 +25,10 @@ MDBSQLITE_DOWNLOAD := $(MDBSQLITE_DIR).tar.bz2
 
 # Dependencies satisfied by packages.
 DEPS_PACKAGES := python-numpy python-dev libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev
-# Packages required by mongo.
-MONGO_PACKAGES := libboost-regex-dev libboost-system-dev libboost-thread-dev libboost-regex1.55.0 libboost-system1.55.0 libboost-thread1.55.0
 
 # GDAL dependency targets.
 GDAL_CONFIG := /usr/local/bin/gdal_config
 BUILD_ESSENTIAL := /usr/share/build-essential
-MONGO_DEV := /usr/local/include/mongo
-MONGO_DEPS := /usr/include/boost/shared_ptr.hpp # Mongo runtime dependencies.
 OPENJPEG_DEV := /usr/local/include/openjpeg-2.0
 FILEGDBAPI_DEV := /usr/local/include/FileGDBAPI.h
 LIBECWJ2_DEV := /usr/local/include/NCSECWClient.h
@@ -57,7 +53,7 @@ NPROC := $(shell nproc)
 
 install: $(GDAL_CONFIG)
 
-$(GDAL_CONFIG): /tmp/gdal $(MONGO_DEV) $(OPENJPEG_DEV) $(FILEGDBAPI_DEV) $(LIBECWJ2_DEV) $(MRSID_DEV) $(LIBKML_DEV) $(LIBKEA_DEV) $(MDBSQLITE_DEV) $(JAVA) $(DEPS_DEV) $(ANT)
+$(GDAL_CONFIG): /tmp/gdal $(OPENJPEG_DEV) $(FILEGDBAPI_DEV) $(LIBECWJ2_DEV) $(MRSID_DEV) $(LIBKML_DEV) $(LIBKEA_DEV) $(MDBSQLITE_DEV) $(JAVA) $(DEPS_DEV) $(ANT)
 	cd /tmp/gdal/gdal \
 	&& ./configure \
 		--prefix=/usr/local \
@@ -80,7 +76,6 @@ $(GDAL_CONFIG): /tmp/gdal $(MONGO_DEV) $(OPENJPEG_DEV) $(FILEGDBAPI_DEV) $(LIBEC
 		--with-fgdb=/usr/local \
 		--with-libkml \
 		--with-openjpeg=/usr/local \
-		--with-mongocxx=/usr/local \
 	&& make -j$(NPROC) \
 	&& cd swig/java \
 	&& sed -i "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" java.opt \
@@ -95,13 +90,6 @@ $(GDAL_CONFIG): /tmp/gdal $(MONGO_DEV) $(OPENJPEG_DEV) $(FILEGDBAPI_DEV) $(LIBEC
 /tmp/gdal: $(SVN) $(BUILD_ESSENTIAL)
 	$(SVN) checkout --quiet "http://svn.osgeo.org/gdal/$(GDAL_VERSION)/" /tmp/gdal/ \
 	&& touch -c /tmp/gdal
-
-$(MONGO_DEV): $(GIT) $(SCONS) $(MONGO_DEPS)
-	$(GIT) clone --branch legacy --depth 1 http://github.com/mongodb/mongo-cxx-driver.git /tmp/mongo-cxx-driver \
-	&& cd /tmp/mongo-cxx-driver \
-	&& $(SCONS) --prefix=/usr/local --sharedclient install
-$(MONGO_DEPS): /tmp/apt-updated
-	apt-get install -y $(MONGO_PACKAGES) && touch -c $(MONGO_DEPS)
 
 $(OPENJPEG_DEV): /tmp/$(OPENJPEG_DOWNLOAD)
 	tar -C /tmp -xzf /tmp/$(OPENJPEG_DOWNLOAD) \
